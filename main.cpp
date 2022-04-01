@@ -40,8 +40,8 @@ struct Board
             x = (int32_t)column + s * dirs[i][1];
 
           state = state & (
-            y >= 0 && y < 7 &&
-            x >= 0 && x < 6 &&
+            x >= 0 && x < 7 &&
+            y >= 0 && y < free[x] &&
             data[x][y] != data[column][row]
             ) >> i;
         }
