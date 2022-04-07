@@ -19,8 +19,7 @@ struct Board
 
     if (free[column] < 6)
     {
-      data[column][free[column]] = player;
-      free[column]++;
+      data[column][free[column]++] = player;
       player = !player;
     }
     else
@@ -29,8 +28,6 @@ struct Board
                 << column
                 << " is already full.\n";
     }
-
-    print();
   }
 
   int32_t score() const
@@ -124,6 +121,7 @@ int main()
     std::cin >> column;
 
     board.place_at(column);
+    board.print();
     score = board.score();
 
     std::cout << "Score: " << score << '\n';
