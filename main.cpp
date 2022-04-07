@@ -47,7 +47,7 @@ struct Board
     {
       for (size_t j = 0; j < 6; j++)
       {
-        for (int32_t k = 0; k < 4; k++)
+        for (size_t k = 0; k < 4; k++)
         {
           size_t zeroes = data[i][j] == 0,
             ones = data[i][j] == 1;
@@ -55,7 +55,7 @@ struct Board
           int32_t x = i,
             y = j;
 
-          for (int32_t s = 0; s < 3; s++)
+          for (size_t s = 0; s < 3; s++)
           {
             x += dirs[k][0];
             y += dirs[k][1];
