@@ -71,18 +71,17 @@ struct Board
             }
           }
 
-          if (x >= 0 && x < 7 && y >= 0 && y < 6)
+          if (zeroes == 4)
+            return -512;
+          else if (ones == 4)
+            return 512;
+          else if (x >= 0 && x < 7 && y >= 0 && y < 6)
           {
             if (zeroes == 0)
               score += values[ones];
             else if (ones == 0)
               score -= values[zeroes];
           }
-
-          if (zeroes == 4)
-            return -512;
-          else if (ones == 4)
-            return 512;
         }
       }
     }
