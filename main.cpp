@@ -107,7 +107,7 @@ struct Board
 
 int main()
 {
-  Board board;
+  Board board = { };
 
   board.init();
   board.print();
