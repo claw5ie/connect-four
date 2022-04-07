@@ -59,7 +59,7 @@ struct Board
           int32_t x = i,
             y = j;
 
-          for (int32_t s = 0; s < 4; s++)
+          for (int32_t s = 0; s < 3; s++)
           {
             x += dirs[k][0];
             y += dirs[k][1];
