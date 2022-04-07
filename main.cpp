@@ -13,7 +13,7 @@ struct Board
       ((int8_t *)data)[i] = -1;
   }
 
-  void place_at(size_t column)
+  bool place_at(size_t column)
   {
     assert(column < 7);
 
@@ -21,12 +21,12 @@ struct Board
     {
       data[column][free[column]++] = player;
       player = !player;
+
+      return true;
     }
     else
     {
-      std::cerr << "error: invalid move: the column "
-                << column
-                << " is already full.\n";
+      return false;
     }
   }
 
