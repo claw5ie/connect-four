@@ -7,9 +7,35 @@ struct Board
   uint8_t free[7];
   int8_t data[7][6];
 
-  int8_t place_at(size_t column)
+  void init()
+  {
+    for (size_t i = 0; i < 7 * 6; i++)
+      ((int8_t *)data)[i] = -1;
+  }
+
+  void place_at(size_t column)
   {
     assert(column < 7);
+
+    if (free[column] < 6)
+    {
+      data[column][free[column]] = player;
+      free[column]++;
+      player = !player;
+    }
+    else
+    {
+      std::cerr << "error: invalid move: the column "
+                << column
+                << " is already full.\n";
+    }
+
+    print();
+  }
+
+  int32_t score() const
+  {
+    static int32_t const values[] = { 0, 1, 10, 50 };
 
     static int32_t const dirs[8][2] = {
       {  1,  0 },
@@ -22,51 +48,86 @@ struct Board
       {  1, -1 }
     };
 
-    if (free[column] < 6)
+    int32_t score = 0;
+
+    for (size_t i = 0; i < 7; i++)
     {
-      size_t row = free[column];
-
-      data[column][free[column]] = player;
-      free[column]++;
-      player = !player;
-
-      char state = 0;
-
-      for (int32_t s = 1; s <= 3; s++)
+      for (size_t j = 0; j < 6; j++)
       {
-        for (int32_t i = 0; i < 8; i++)
+        for (int32_t k = 0; k < 8; k++)
         {
-          int32_t const y = (int32_t)row + s * dirs[i][0],
-            x = (int32_t)column + s * dirs[i][1];
+          size_t zeroes = data[i][j] == 0,
+            ones = data[i][j] == 1;
 
-          state = state & (
-            x >= 0 && x < 7 &&
-            y >= 0 && y < free[x] &&
-            data[x][y] != data[column][row]
-            ) >> i;
+          int32_t x = i,
+            y = j;
+
+          for (int32_t s = 0; s < 4; s++)
+          {
+            x += dirs[k][0];
+            y += dirs[k][1];
+
+            if (x >= 0 && x < 7 && y >= 0 && y < free[x])
+            {
+              zeroes += (data[x][y] == 0);
+              ones += (data[x][y] == 1);
+            }
+          }
+
+          if (x >= 0 && x < 7 && y >= 0 && y < 6)
+          {
+            if (zeroes == 0)
+              score += values[ones];
+            else if (ones == 0)
+              score -= values[3 - zeroes];
+          }
+
+          if (zeroes == 4)
+            return -512;
+          else if (ones == 4)
+            return 512;
         }
       }
+    }
 
-      return ~state ? data[column][row] : -1;
-    }
-    else
-    {
-      std::cerr << "error: invalid move: the column "
-                << column
-                << " is already full.\n";
-    }
+    return score;
   }
 
-  size_t score() const
+  void print() const
   {
-    return 0;
+    for (size_t j = 0; j < 6; j++)
+    {
+      for (size_t i = 0; i < 7; i++)
+      {
+        char ch = data[i][5 - j];
+        std::cout << (ch != -1 ? (ch ? 'X' : 'O') : '-')
+                  << (i + 1 < 7 ? ' ' : '\n');
+      }
+    }
   }
 };
 
 
 int main()
 {
-  std::cout << sizeof(Board) << std::endl;
+  Board board;
+
+  board.init();
+  board.print();
+
+  auto score = 0;
+
+  do
+  {
+    size_t column = 0;
+    std::cout << "where to place? ";
+    std::cin >> column;
+
+    board.place_at(column);
+    score = board.score();
+
+    std::cout << "Score: " << score << '\n';
+  } while (score != 512 && score != -512 && !std::cin.eof());
 
   return 0;
 }
