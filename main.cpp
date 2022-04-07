@@ -76,7 +76,7 @@ struct Board
             if (zeroes == 0)
               score += values[ones];
             else if (ones == 0)
-              score -= values[3 - zeroes];
+              score -= values[zeroes];
           }
 
           if (zeroes == 4)
