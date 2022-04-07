@@ -115,11 +115,20 @@ int main()
     std::cout << "where to place? ";
     std::cin >> column;
 
-    board.place_at(column);
-    board.print();
-    score = board.score();
-
-    std::cout << "Score: " << score << '\n';
+    if (column >= 7)
+    {
+      std::cout << "Invalid column number. It should be no greater than 6.\n";
+    }
+    else if (!board.place_at(column))
+    {
+      std::cout << "Column " << column << " is already full! Try again with different column.\n";
+    }
+    else
+    {
+      board.print();
+      score = board.score();
+      std::cout << "Score: " << score << '\n';
+    }
   } while (score != 512 && score != -512 && !std::cin.eof());
 
   return 0;
