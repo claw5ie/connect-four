@@ -34,15 +34,11 @@ struct Board
   {
     static int32_t const values[] = { 0, 1, 10, 50 };
 
-    static int32_t const dirs[8][2] = {
-      {  1,  0 },
-      {  1,  1 },
-      {  0,  1 },
-      { -1,  1 },
-      { -1,  0 },
-      { -1, -1 },
-      {  0, -1 },
-      {  1, -1 }
+    static int32_t const dirs[4][2] = {
+      { 1, -1 },
+      { 1,  0 },
+      { 1,  1 },
+      { 0,  1 }
     };
 
     int32_t score = 0;
@@ -51,7 +47,7 @@ struct Board
     {
       for (size_t j = 0; j < 6; j++)
       {
-        for (int32_t k = 0; k < 8; k++)
+        for (int32_t k = 0; k < 4; k++)
         {
           size_t zeroes = data[i][j] == 0,
             ones = data[i][j] == 1;
