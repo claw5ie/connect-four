@@ -7,12 +7,6 @@ struct Board
   uint8_t free[7];
   int8_t data[7][6];
 
-  void init()
-  {
-    for (size_t i = 0; i < 7 * 6; i++)
-      ((int8_t *)data)[i] = -1;
-  }
-
   bool place_at(size_t column)
   {
     assert(column < 7);
@@ -49,8 +43,8 @@ struct Board
       {
         for (size_t k = 0; k < 4; k++)
         {
-          size_t zeroes = data[i][j] == 0,
-            ones = data[i][j] == 1;
+          size_t zeroes = ((data[i][j] == 0) && j < free[i]),
+            ones = ((data[i][j] == 1) && j < free[i]);
 
           int32_t x = i,
             y = j;
@@ -91,8 +85,10 @@ struct Board
     {
       for (size_t i = 0; i < 7; i++)
       {
-        char ch = data[i][5 - j];
-        std::cout << (ch != -1 ? (ch ? 'X' : 'O') : '-')
+        size_t row = 5 - j;
+        char ch = data[i][row];
+
+        std::cout << (row < free[i] ? (ch ? 'X' : 'O') : '-')
                   << (i + 1 < 7 ? ' ' : '\n');
       }
     }
@@ -104,7 +100,6 @@ int main()
 {
   Board board = { };
 
-  board.init();
   board.print();
 
   auto score = 0;
