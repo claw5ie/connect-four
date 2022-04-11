@@ -140,30 +140,26 @@ char const *to_string(GameState status)
 struct Move
 {
   uint32_t move;
-  Board::Status status;
+  int32_t score;
 };
 
 Move max_aux(Board &, size_t);
 
 Move min_aux(Board &board, size_t depth)
 {
-  Move min = { INVALID_MOVE, { DRAW, std::numeric_limits<int32_t>::max() } };
-
   if (depth == 0)
-    return min;
+    return { INVALID_MOVE, board.score().score };
+
+  Move min = { INVALID_MOVE, std::numeric_limits<int32_t>::max() };
 
   for (uint32_t i = 0; i < 7; i++)
   {
     if (!board.insert_at(i))
       continue;
 
-    auto score = board.score();
-    if (min.status.score > score.score)
-      min = { i, score };
-
     auto max = max_aux(board, depth - 1);
-    if (min.status.score > max.status.score)
-      min = { i, { score.state, max.status.score } };
+    if (min.score > max.score)
+      min = { i, max.score };
 
     board.remove_at(i);
   }
@@ -173,25 +169,19 @@ Move min_aux(Board &board, size_t depth)
 
 Move max_aux(Board &board, size_t depth)
 {
-  Move max = {
-    INVALID_MOVE, { DRAW, std::numeric_limits<int32_t>::lowest() }
-  };
-
   if (depth == 0)
-    return max;
+    return { INVALID_MOVE, board.score().score };
+
+  Move max = { INVALID_MOVE, std::numeric_limits<int32_t>::lowest() };
 
   for (uint32_t i = 0; i < 7; i++)
   {
     if (!board.insert_at(i))
       continue;
 
-    auto score = board.score();
-    if (max.status.score < score.score)
-      max = { i, score };
-
     auto min = max_aux(board, depth - 1);
-    if (max.status.score < min.status.score)
-      max = { i, { score.state, min.status.score } };
+    if (max.score < min.score)
+      max = { i, min.score };
 
     board.remove_at(i);
   }
@@ -227,10 +217,11 @@ int main()
 
     board.insert_at(move.move);
     board.print();
+    auto status = board.score().state;
 
-    if (move.status.state != NOT_OVER)
+    if (status != NOT_OVER)
     {
-      std::cout << "Status: " << to_string(move.status.state) << '\n';
+      std::cout << "Status: " << to_string(status) << '\n';
       break;
     }
 
