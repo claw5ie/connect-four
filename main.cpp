@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#include <limits>
 
 enum GameState
 {
@@ -22,7 +23,18 @@ struct Board
   uint8_t free[7];
   int8_t data[7][6];
 
-  bool place_at(size_t column)
+  void remove_at(size_t column)
+  {
+    assert(column < 7);
+
+    if (free[column] > 0)
+    {
+      free[column]--;
+      player = !player;
+    }
+  }
+
+  bool insert_at(size_t column)
   {
     assert(column < 7);
 
@@ -116,6 +128,86 @@ struct Board
   }
 };
 
+char const *to_string(GameState status)
+{
+  static char const *const lookup[] = { "Not over", "Draw", "O won", "X won" };
+
+  return status < GAME_STATE_COUNT ? lookup[status] : nullptr;
+}
+
+#define INVALID_MOVE (std::numeric_limits<int32_t>::max())
+
+struct Move
+{
+  uint32_t move;
+  Board::Status status;
+};
+
+Move max_aux(Board &, size_t);
+
+Move min_aux(Board &board, size_t depth)
+{
+  Move min = { INVALID_MOVE, { DRAW, std::numeric_limits<int32_t>::max() } };
+
+  if (depth == 0)
+    return min;
+
+  for (uint32_t i = 0; i < 7; i++)
+  {
+    if (!board.insert_at(i))
+      continue;
+
+    auto score = board.score();
+    if (min.status.score > score.score)
+      min = { i, score };
+
+    auto max = max_aux(board, depth - 1);
+    if (min.status.score > max.status.score)
+      min = { i, { score.state, max.status.score } };
+
+    board.remove_at(i);
+  }
+
+  return min;
+}
+
+Move max_aux(Board &board, size_t depth)
+{
+  Move max = {
+    INVALID_MOVE, { DRAW, std::numeric_limits<int32_t>::lowest() }
+  };
+
+  if (depth == 0)
+    return max;
+
+  for (uint32_t i = 0; i < 7; i++)
+  {
+    if (!board.insert_at(i))
+      continue;
+
+    auto score = board.score();
+    if (max.status.score < score.score)
+      max = { i, score };
+
+    auto min = max_aux(board, depth - 1);
+    if (max.status.score < min.status.score)
+      max = { i, { score.state, min.status.score } };
+
+    board.remove_at(i);
+  }
+
+  return max;
+}
+
+Move minimax(Board board, size_t max_depth)
+{
+  return min_aux(board, max_depth);
+}
+
+Move maximin(Board board, size_t max_depth)
+{
+  return max_aux(board, max_depth);
+}
 
 int main()
 {
@@ -123,29 +215,26 @@ int main()
 
   board.print();
 
-  Board::Status score;
-
   do
   {
-    size_t column = 0;
-    std::cout << "where to place? ";
-    std::cin >> column;
+    auto move = board.player ? minimax(board, 8) : maximin(board, 8);
 
-    if (column >= 7)
+    if (move.move >= 7)
     {
       std::cout << "Invalid column number. It should be no greater than 6.\n";
+      break;
     }
-    else if (!board.place_at(column))
+
+    board.insert_at(move.move);
+    board.print();
+
+    if (move.status.state != NOT_OVER)
     {
-      std::cout << "Column " << column << " is already full! Try again with different column.\n";
+      std::cout << "Status: " << to_string(move.status.state) << '\n';
+      break;
     }
-    else
-    {
-      board.print();
-      score = board.score();
-      std::cout << "Score: " << score.score << '\n';
-    }
-  } while (score.state != X_WIN && score.state != O_WIN && !std::cin.eof());
+
+  } while (true);
 
   return 0;
 }
