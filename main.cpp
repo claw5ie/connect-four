@@ -1,8 +1,23 @@
 #include <iostream>
 #include <cassert>
 
+enum GameState
+{
+  NOT_OVER,
+  DRAW,
+  O_WIN,
+  X_WIN,
+  GAME_STATE_COUNT
+};
+
 struct Board
 {
+  struct Status
+  {
+    GameState state;
+    int32_t score;
+  };
+
   int8_t player;
   uint8_t free[7];
   int8_t data[7][6];
@@ -24,7 +39,7 @@ struct Board
     }
   }
 
-  int32_t score() const
+  Status score() const
   {
     static int32_t const values[] = { 0, 1, 10, 50 };
 
@@ -62,9 +77,9 @@ struct Board
           }
 
           if (zeroes == 4)
-            return -512;
+            return { O_WIN, -512 };
           else if (ones == 4)
-            return 512;
+            return { X_WIN, 512 };
           else if (x >= 0 && x < 7 && y >= 0 && y < 6)
           {
             if (zeroes == 0)
@@ -76,7 +91,13 @@ struct Board
       }
     }
 
-    return score;
+    for (size_t i = 0; i < 7; i++)
+    {
+      if (free[i] < 7)
+        return { NOT_OVER, score };
+    }
+
+    return { DRAW, score };
   }
 
   void print() const
@@ -102,7 +123,7 @@ int main()
 
   board.print();
 
-  auto score = 0;
+  Board::Status score;
 
   do
   {
@@ -122,9 +143,9 @@ int main()
     {
       board.print();
       score = board.score();
-      std::cout << "Score: " << score << '\n';
+      std::cout << "Score: " << score.score << '\n';
     }
-  } while (score != 512 && score != -512 && !std::cin.eof());
+  } while (score.state != X_WIN && score.state != O_WIN && !std::cin.eof());
 
   return 0;
 }
