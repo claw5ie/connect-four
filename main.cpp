@@ -148,60 +148,39 @@ struct Move
   int32_t score;
 };
 
-Move max_aux(Board &, size_t);
-
-Move min_aux(Board &board, size_t depth)
+Move minimax_aux(Board &board, size_t depth)
 {
   if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
 
-  Move min = { INVALID_MOVE, std::numeric_limits<int32_t>::max() };
+  Move result = { INVALID_MOVE,
+                  board.player ? std::numeric_limits<int32_t>::lowest() :
+                    std::numeric_limits<int32_t>::max() };
 
   for (uint32_t i = 0; i < 7; i++)
   {
     if (!board.insert_at(i))
       continue;
 
-    auto max = max_aux(board, depth - 1);
-    if (min.score > max.score)
-      min = { i, max.score };
+    auto score = minimax_aux(board, depth - 1).score;
+
+    if (
+      (board.player && result.score > score) ||
+      (!board.player && result.score < score)
+      )
+    {
+      result = { i, score };
+    }
 
     board.remove_at(i);
   }
 
-  return min;
+  return result;
 }
 
-Move max_aux(Board &board, size_t depth)
+int32_t minimax(Board board, size_t max_depth)
 {
-  if (depth == 0 || board.is_over())
-    return { INVALID_MOVE, board.score().score };
-
-  Move max = { INVALID_MOVE, std::numeric_limits<int32_t>::lowest() };
-
-  for (uint32_t i = 0; i < 7; i++)
-  {
-    if (!board.insert_at(i))
-      continue;
-
-    auto min = max_aux(board, depth - 1);
-    if (max.score < min.score)
-      max = { i, min.score };
-
-    board.remove_at(i);
-  }
-
-  return max;
-}
-
-Move minimax(Board board, size_t max_depth)
-{
-  return min_aux(board, max_depth);
-}
-
-Move maximin(Board board, size_t max_depth)
-{
-  return max_aux(board, max_depth);
+  return minimax_aux(board, max_depth).move;
 }
 
 int main()
@@ -212,15 +191,15 @@ int main()
 
   do
   {
-    auto move = board.player ? minimax(board, 8) : maximin(board, 8);
+    auto move = minimax(board, board.player ? 8 : 8);
 
-    if (move.move >= 7)
+    if (move >= 7)
     {
       std::cout << "Invalid column number. It should be no greater than 6.\n";
       break;
     }
 
-    board.insert_at(move.move);
+    board.insert_at(move);
     board.print();
     auto status = board.score().state;
 
