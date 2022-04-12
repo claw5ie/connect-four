@@ -178,9 +178,59 @@ Move minimax_aux(Board &board, size_t depth)
   return result;
 }
 
+Move alpha_beta_aux(Board &board, int32_t alpha, int32_t beta, size_t depth)
+{
+  if (depth == 0 || board.is_over())
+    return { INVALID_MOVE, board.score().score };
+
+  Move result = { INVALID_MOVE,
+                  board.player ? std::numeric_limits<int32_t>::lowest() :
+                    std::numeric_limits<int32_t>::max() };
+
+  for (uint32_t i = 0; i < 7; i++)
+  {
+    if (!board.insert_at(i))
+      continue;
+
+    auto score = alpha_beta_aux(board, alpha, beta, depth - 1).score;
+
+    if (board.player)
+    {
+      if (result.score > score)
+        result = { i, score };
+
+      beta = std::min(beta, score);
+    }
+    else
+    {
+      if (result.score < score)
+        result = { i, score };
+
+      alpha = std::max(alpha, score);
+    }
+
+    board.remove_at(i);
+
+    if (beta <= alpha)
+      break;
+  }
+
+  return result;
+}
+
 int32_t minimax(Board board, size_t max_depth)
 {
   return minimax_aux(board, max_depth).move;
+}
+
+int32_t alpha_beta(Board board, size_t max_depth)
+{
+  return alpha_beta_aux(
+    board,
+    std::numeric_limits<int32_t>::lowest(),
+    std::numeric_limits<int32_t>::max(),
+    max_depth
+    ).move;
 }
 
 int main()
