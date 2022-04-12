@@ -105,7 +105,7 @@ struct Board
 
     for (size_t i = 0; i < 7; i++)
     {
-      if (free[i] < 7)
+      if (free[i] < 6)
         return { NOT_OVER, score };
     }
 
