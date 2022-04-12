@@ -81,8 +81,8 @@ struct Board
       {
         for (size_t k = 0; k < 4; k++)
         {
-          size_t zeroes = ((data[i][j] == 0) && j < free[i]),
-            ones = ((data[i][j] == 1) && j < free[i]);
+          size_t zeroes = !data[i][j] && j < free[i],
+            ones = (data[i][j] != 0) && j < free[i];
 
           int32_t x = i,
             y = j;
@@ -94,8 +94,8 @@ struct Board
 
             if (x >= 0 && x < 7 && y >= 0 && y < free[x])
             {
-              zeroes += (data[x][y] == 0);
-              ones += (data[x][y] == 1);
+              zeroes += !data[x][y];
+              ones += (data[x][y] != 0);
             }
           }
 
