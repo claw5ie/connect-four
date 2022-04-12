@@ -218,12 +218,12 @@ Move alpha_beta_aux(Board &board, int32_t alpha, int32_t beta, size_t depth)
   return result;
 }
 
-int32_t minimax(Board board, size_t max_depth)
+uint32_t minimax(Board board, size_t max_depth)
 {
   return minimax_aux(board, max_depth).move;
 }
 
-int32_t alpha_beta(Board board, size_t max_depth)
+uint32_t alpha_beta(Board board, size_t max_depth)
 {
   return alpha_beta_aux(
     board,
