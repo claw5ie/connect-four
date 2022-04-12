@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cassert>
 #include <limits>
+#include <cmath>
+
+#define INVALID_MOVE (std::numeric_limits<int32_t>::max())
 
 enum GameState
 {
@@ -60,6 +63,20 @@ struct Board
     }
 
     return true;
+  }
+
+  uint32_t choose_random_move() const
+  {
+    static uint32_t moves[7];
+
+    size_t count = 0;
+    for (size_t i = 0; i < 7; i++)
+    {
+      moves[count] = i;
+      count += (free[i] < 6);
+    }
+
+    return count == 0 ? INVALID_MOVE : moves[rand() % count];
   }
 
   Status score() const
@@ -139,8 +156,6 @@ char const *to_string(GameState status)
 
   return status < GAME_STATE_COUNT ? lookup[status] : nullptr;
 }
-
-#define INVALID_MOVE (std::numeric_limits<int32_t>::max())
 
 struct Move
 {
@@ -233,6 +248,161 @@ uint32_t alpha_beta(Board board, size_t max_depth)
     ).move;
 }
 
+uint32_t monte_carlo_tree_search(Board const &board, size_t max_iters)
+{
+  struct MonteCarloTree
+  {
+    struct Node
+    {
+      Board board;
+      Node *parent;
+      Node *children;
+      uint32_t move;
+      size_t count;
+      int32_t wins;
+      uint32_t visits;
+    };
+
+    Node root;
+
+    MonteCarloTree(Board const &board)
+      : root({ board, &root, nullptr, INVALID_MOVE, 0, 0, 0 })
+    {
+    }
+
+    Node *find_best_leaf()
+    {
+      Node *current = &root;
+
+      while (current->children != nullptr)
+        current = choose_best_child(current);
+
+      return current;
+    }
+
+    Node *choose_best_child(Node *parent)
+    {
+      assert(parent->count > 0);
+
+      double best_ucb = std::numeric_limits<double>::lowest();
+      Node *best_child = nullptr;
+
+      for (size_t i = 0; i < parent->count; i++)
+      {
+        Node &child = parent->children[i];
+
+        if (child.visits == 0)
+          return &child;
+
+        double const score = (double)child.wins / child.visits +
+          std::sqrt(2 * std::log(parent->visits) / child.visits);
+
+        if (best_ucb < score)
+        {
+          best_ucb = score;
+          best_child = &child;
+        }
+      }
+
+      return best_child;
+    }
+
+    bool rollout(Node *leaf)
+    {
+      assert(leaf->count == 0);
+
+      if (leaf->visits > 0)
+      {
+        leaf = append_leaves(leaf);
+
+        if (leaf == nullptr)
+          return false;
+      }
+
+      Board board = leaf->board;
+
+      while (!board.is_over())
+        board.insert_at(board.choose_random_move());
+
+      auto win = board.score().state;
+
+      backpropagate(
+        leaf,
+        root.board.player ?
+          win == X_WIN : win == O_WIN
+        );
+
+      return true;
+    }
+
+    Node *append_leaves(Node *leaf)
+    {
+      static uint32_t moves[7];
+
+      size_t count = 0;
+      for (uint32_t i = 0; i < 7; i++)
+      {
+        if (leaf->board.free[i] < 6)
+          moves[count++] = i;
+      }
+
+      if (count == 0)
+        return nullptr;
+
+      leaf->children = new Node[count]{ };
+      leaf->count = count;
+
+      for (size_t i = 0; i < count; i++)
+      {
+        Node &node = leaf->children[i];
+        node.board = leaf->board;
+        node.board.insert_at(moves[i]);
+        node.parent = leaf;
+        node.move = moves[i];
+      }
+
+      return leaf->children;
+    }
+
+    void backpropagate(Node *leaf, int32_t wins)
+    {
+      while (leaf->parent != leaf)
+      {
+        leaf->wins += wins;
+        leaf->visits++;
+        leaf = leaf->parent;
+      }
+
+      leaf->wins += wins;
+      leaf->visits++;
+    }
+
+    ~MonteCarloTree()
+    {
+      clean(root);
+    }
+
+  private:
+    void clean(Node const &node) const
+    {
+      for (size_t i = 0; i < node.count; i++)
+        clean(node.children[i]);
+
+      delete[] node.children;
+    }
+  };
+
+  MonteCarloTree tree{ board };
+
+  while (max_iters-- > 0)
+  {
+    if (!tree.rollout(tree.find_best_leaf()))
+      break;
+  }
+
+  return tree.choose_best_child(&tree.root)->move;
+}
+
 int main()
 {
   Board board = { };
@@ -241,7 +411,7 @@ int main()
 
   do
   {
-    auto move = minimax(board, board.player ? 8 : 8);
+    auto move = monte_carlo_tree_search(board, board.player ? 50000 : 100000);
 
     if (move >= 7)
     {
