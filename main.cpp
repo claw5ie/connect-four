@@ -51,6 +51,17 @@ struct Board
     }
   }
 
+  bool is_over() const
+  {
+    for (size_t i = 0; i < 7; i++)
+    {
+      if (free[i] < 6)
+        return false;
+    }
+
+    return true;
+  }
+
   Status score() const
   {
     static int32_t const values[] = { 0, 1, 10, 50 };
@@ -103,13 +114,7 @@ struct Board
       }
     }
 
-    for (size_t i = 0; i < 7; i++)
-    {
-      if (free[i] < 6)
-        return { NOT_OVER, score };
-    }
-
-    return { DRAW, score };
+    return { is_over() ? DRAW : NOT_OVER, score };
   }
 
   void print() const
@@ -147,7 +152,7 @@ Move max_aux(Board &, size_t);
 
 Move min_aux(Board &board, size_t depth)
 {
-  if (depth == 0)
+  if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
 
   Move min = { INVALID_MOVE, std::numeric_limits<int32_t>::max() };
@@ -169,7 +174,7 @@ Move min_aux(Board &board, size_t depth)
 
 Move max_aux(Board &board, size_t depth)
 {
-  if (depth == 0)
+  if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
 
   Move max = { INVALID_MOVE, std::numeric_limits<int32_t>::lowest() };
