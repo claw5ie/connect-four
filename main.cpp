@@ -3,7 +3,7 @@
 #include <limits>
 #include <cmath>
 
-#define INVALID_MOVE (std::numeric_limits<int32_t>::max())
+#define INVALID_MOVE (std::numeric_limits<uint32_t>::max())
 
 enum GameState
 {
