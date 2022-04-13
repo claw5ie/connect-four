@@ -10,20 +10,20 @@ using ScoreType = int32_t;
 #define LOWEST_SCORE (std::numeric_limits<ScoreType>::lowest())
 #define GREATEST_SCORE (std::numeric_limits<ScoreType>::max())
 
-enum GameState
-{
-  NOT_OVER,
-  DRAW,
-  O_WIN,
-  X_WIN,
-  GAME_STATE_COUNT
-};
-
 #define COLUMNS 7
 #define ROWS 6
 
 struct Board
 {
+  enum GameState
+  {
+    NOT_OVER,
+    DRAW,
+    O_WIN,
+    X_WIN,
+    GAME_STATE_COUNT
+  };
+
   struct Status
   {
     GameState state;
@@ -157,11 +157,11 @@ struct Board
   }
 };
 
-char const *to_string(GameState status)
+char const *to_string(Board::GameState status)
 {
   static char const *const lookup[] = { "Not over", "Draw", "O won", "X won" };
 
-  return status < GAME_STATE_COUNT ? lookup[status] : nullptr;
+  return status < Board::GAME_STATE_COUNT ? lookup[status] : nullptr;
 }
 
 struct MinimaxData
@@ -335,7 +335,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
       backpropagate(
         leaf,
         root.board.player ?
-          win == X_WIN : win == O_WIN
+          win == Board::X_WIN : win == Board::O_WIN
         );
 
       return true;
@@ -428,7 +428,7 @@ int main()
     std::cout << "******************************************\n";
     auto status = board.score().state;
 
-    if (status != NOT_OVER)
+    if (status != Board::NOT_OVER)
     {
       std::cout << "Status: " << to_string(status) << '\n';
       break;
