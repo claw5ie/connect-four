@@ -2,6 +2,7 @@
 #include <cassert>
 #include <limits>
 #include <cmath>
+#include <cstring>
 
 using MoveType = uint32_t;
 using ScoreType = int32_t;
@@ -140,6 +141,29 @@ struct Board
     }
 
     return { is_over() ? DRAW : NOT_OVER, score };
+  }
+
+  void read_board(char const *board, bool player)
+  {
+    assert(std::strlen(board) == COLUMNS * ROWS);
+
+    for (size_t j = 0; j < COLUMNS; j++)
+    {
+      for (size_t i = ROWS; i-- > 0; )
+      {
+        char ch = board[i * COLUMNS + j];
+
+        data[j][ROWS - 1 - i] = (ch == 'x' || ch == 'X');
+
+        if (ch == 'b' || ch == 'B')
+        {
+          top[j] = ROWS - 1 - i;
+          break;
+        }
+      }
+    }
+
+    this->player = player;
   }
 
   void print(size_t offset = 0) const
