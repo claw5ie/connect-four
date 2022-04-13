@@ -31,16 +31,16 @@ struct Board
   };
 
   int8_t player;
-  uint8_t free[COLUMNS];
+  uint8_t top[COLUMNS];
   int8_t data[COLUMNS][ROWS];
 
   void remove_at(MoveType column)
   {
     assert(column < COLUMNS);
 
-    if (free[column] > 0)
+    if (top[column] > 0)
     {
-      free[column]--;
+      top[column]--;
       player = !player;
     }
   }
@@ -49,9 +49,9 @@ struct Board
   {
     assert(column < COLUMNS);
 
-    if (free[column] < ROWS)
+    if (top[column] < ROWS)
     {
-      data[column][free[column]++] = player;
+      data[column][top[column]++] = player;
       player = !player;
 
       return true;
@@ -66,7 +66,7 @@ struct Board
   {
     for (size_t i = 0; i < COLUMNS; i++)
     {
-      if (free[i] < ROWS)
+      if (top[i] < ROWS)
         return false;
     }
 
@@ -81,7 +81,7 @@ struct Board
     for (MoveType i = 0; i < COLUMNS; i++)
     {
       moves[count] = i;
-      count += (free[i] < ROWS);
+      count += (top[i] < ROWS);
     }
 
     return count == 0 ? INVALID_MOVE : moves[rand() % count];
@@ -106,8 +106,8 @@ struct Board
       {
         for (size_t k = 0; k < 4; k++)
         {
-          size_t zeroes = !data[i][j] && j < free[i],
-            ones = (data[i][j] != 0) && j < free[i];
+          size_t zeroes = !data[i][j] && j < top[i],
+            ones = (data[i][j] != 0) && j < top[i];
 
           int32_t x = i,
             y = j;
@@ -117,7 +117,7 @@ struct Board
             x += dirs[k][0];
             y += dirs[k][1];
 
-            if (x >= 0 && x < COLUMNS && y >= 0 && y < free[x])
+            if (x >= 0 && x < COLUMNS && y >= 0 && y < top[x])
             {
               zeroes += !data[x][y];
               ones += (data[x][y] != 0);
@@ -150,7 +150,7 @@ struct Board
       {
         size_t row = ROWS - 1 - j;
 
-        std::cout << (row < free[i] ? (data[i][row] ? 'X' : 'O') : '-')
+        std::cout << (row < top[i] ? (data[i][row] ? 'X' : 'O') : '-')
                   << (i + 1 < COLUMNS ? ' ' : '\n');
       }
     }
@@ -348,7 +348,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
       size_t count = 0;
       for (MoveType i = 0; i < COLUMNS; i++)
       {
-        if (leaf->board.free[i] < ROWS)
+        if (leaf->board.top[i] < ROWS)
           moves[count++] = i;
       }
 
