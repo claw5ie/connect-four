@@ -3,7 +3,12 @@
 #include <limits>
 #include <cmath>
 
-#define INVALID_MOVE (std::numeric_limits<uint32_t>::max())
+using MoveType = uint32_t;
+using ScoreType = int32_t;
+
+#define INVALID_MOVE (std::numeric_limits<MoveType>::max())
+#define LOWEST_SCORE (std::numeric_limits<ScoreType>::lowest())
+#define GREATEST_SCORE (std::numeric_limits<ScoreType>::max())
 
 enum GameState
 {
@@ -19,14 +24,14 @@ struct Board
   struct Status
   {
     GameState state;
-    int32_t score;
+    ScoreType score;
   };
 
   int8_t player;
   uint8_t free[7];
   int8_t data[7][6];
 
-  void remove_at(size_t column)
+  void remove_at(MoveType column)
   {
     assert(column < 7);
 
@@ -37,7 +42,7 @@ struct Board
     }
   }
 
-  bool insert_at(size_t column)
+  bool insert_at(MoveType column)
   {
     assert(column < 7);
 
@@ -65,12 +70,12 @@ struct Board
     return true;
   }
 
-  uint32_t choose_random_move() const
+  MoveType choose_random_move() const
   {
-    static uint32_t moves[7];
+    static MoveType moves[7];
 
     size_t count = 0;
-    for (size_t i = 0; i < 7; i++)
+    for (MoveType i = 0; i < 7; i++)
     {
       moves[count] = i;
       count += (free[i] < 6);
@@ -81,7 +86,7 @@ struct Board
 
   Status score() const
   {
-    static int32_t const values[] = { 0, 1, 10, 50 };
+    static ScoreType const values[] = { 0, 1, 10, 50 };
 
     static int32_t const dirs[4][2] = {
       { 1, -1 },
@@ -90,7 +95,7 @@ struct Board
       { 0,  1 }
     };
 
-    int32_t score = 0;
+    ScoreType score = 0;
 
     for (size_t i = 0; i < 7; i++)
     {
@@ -157,22 +162,22 @@ char const *to_string(GameState status)
   return status < GAME_STATE_COUNT ? lookup[status] : nullptr;
 }
 
-struct Move
+struct MinimaxData
 {
-  uint32_t move;
-  int32_t score;
+  MoveType move;
+  ScoreType score;
 };
 
-Move minimax_aux(Board &board, size_t depth)
+MinimaxData minimax_aux(Board &board, size_t depth)
 {
   if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
 
-  Move result = { INVALID_MOVE,
-                  board.player ? std::numeric_limits<int32_t>::lowest() :
-                    std::numeric_limits<int32_t>::max() };
+  MinimaxData result = {
+    INVALID_MOVE, board.player ? LOWEST_SCORE : GREATEST_SCORE
+  };
 
-  for (uint32_t i = 0; i < 7; i++)
+  for (MoveType i = 0; i < 7; i++)
   {
     if (!board.insert_at(i))
       continue;
@@ -193,16 +198,18 @@ Move minimax_aux(Board &board, size_t depth)
   return result;
 }
 
-Move alpha_beta_aux(Board &board, int32_t alpha, int32_t beta, size_t depth)
+MinimaxData alpha_beta_aux(
+  Board &board, ScoreType alpha, ScoreType beta, size_t depth
+  )
 {
   if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
 
-  Move result = { INVALID_MOVE,
-                  board.player ? std::numeric_limits<int32_t>::lowest() :
-                    std::numeric_limits<int32_t>::max() };
+  MinimaxData result = {
+    INVALID_MOVE, board.player ? LOWEST_SCORE : GREATEST_SCORE
+  };
 
-  for (uint32_t i = 0; i < 7; i++)
+  for (MoveType i = 0; i < 7; i++)
   {
     if (!board.insert_at(i))
       continue;
@@ -233,22 +240,19 @@ Move alpha_beta_aux(Board &board, int32_t alpha, int32_t beta, size_t depth)
   return result;
 }
 
-uint32_t minimax(Board board, size_t max_depth)
+MoveType minimax(Board board, size_t max_depth)
 {
   return minimax_aux(board, max_depth).move;
 }
 
-uint32_t alpha_beta(Board board, size_t max_depth)
+MoveType alpha_beta(Board board, size_t max_depth)
 {
   return alpha_beta_aux(
-    board,
-    std::numeric_limits<int32_t>::lowest(),
-    std::numeric_limits<int32_t>::max(),
-    max_depth
+    board, LOWEST_SCORE, GREATEST_SCORE, max_depth
     ).move;
 }
 
-uint32_t monte_carlo_tree_search(Board const &board, size_t max_iters)
+MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
 {
   struct MonteCarloTree
   {
@@ -257,9 +261,9 @@ uint32_t monte_carlo_tree_search(Board const &board, size_t max_iters)
       Board board;
       Node *parent;
       Node *children;
-      uint32_t move;
+      MoveType move;
       size_t count;
-      int32_t wins;
+      uint32_t wins;
       uint32_t visits;
     };
 
@@ -337,10 +341,10 @@ uint32_t monte_carlo_tree_search(Board const &board, size_t max_iters)
 
     Node *append_leaves(Node *leaf)
     {
-      static uint32_t moves[7];
+      static MoveType moves[7];
 
       size_t count = 0;
-      for (uint32_t i = 0; i < 7; i++)
+      for (MoveType i = 0; i < 7; i++)
       {
         if (leaf->board.free[i] < 6)
           moves[count++] = i;
@@ -364,16 +368,16 @@ uint32_t monte_carlo_tree_search(Board const &board, size_t max_iters)
       return leaf->children;
     }
 
-    void backpropagate(Node *leaf, int32_t wins)
+    void backpropagate(Node *leaf, bool won)
     {
       while (leaf->parent != leaf)
       {
-        leaf->wins += wins;
+        leaf->wins += won;
         leaf->visits++;
         leaf = leaf->parent;
       }
 
-      leaf->wins += wins;
+      leaf->wins += won;
       leaf->visits++;
     }
 
