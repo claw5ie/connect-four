@@ -413,8 +413,6 @@ int main()
 {
   Board board = { };
 
-  board.print();
-
   do
   {
     auto move = monte_carlo_tree_search(board, board.player ? 50000 : 100000);
@@ -427,6 +425,7 @@ int main()
 
     board.insert_at(move);
     board.print();
+    std::cout << "******************************************\n";
     auto status = board.score().state;
 
     if (status != NOT_OVER)
