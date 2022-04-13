@@ -280,7 +280,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
     {
       Node *current = &root;
 
-      while (current->children != nullptr)
+      while (current->count > 0)
         current = choose_best_child(current);
 
       return current;
