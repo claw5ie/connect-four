@@ -19,6 +19,9 @@ enum GameState
   GAME_STATE_COUNT
 };
 
+#define COLUMNS 7
+#define ROWS 6
+
 struct Board
 {
   struct Status
@@ -28,12 +31,12 @@ struct Board
   };
 
   int8_t player;
-  uint8_t free[7];
-  int8_t data[7][6];
+  uint8_t free[COLUMNS];
+  int8_t data[COLUMNS][ROWS];
 
   void remove_at(MoveType column)
   {
-    assert(column < 7);
+    assert(column < COLUMNS);
 
     if (free[column] > 0)
     {
@@ -44,9 +47,9 @@ struct Board
 
   bool insert_at(MoveType column)
   {
-    assert(column < 7);
+    assert(column < COLUMNS);
 
-    if (free[column] < 6)
+    if (free[column] < ROWS)
     {
       data[column][free[column]++] = player;
       player = !player;
@@ -61,9 +64,9 @@ struct Board
 
   bool is_over() const
   {
-    for (size_t i = 0; i < 7; i++)
+    for (size_t i = 0; i < COLUMNS; i++)
     {
-      if (free[i] < 6)
+      if (free[i] < ROWS)
         return false;
     }
 
@@ -72,13 +75,13 @@ struct Board
 
   MoveType choose_random_move() const
   {
-    static MoveType moves[7];
+    static MoveType moves[COLUMNS];
 
     size_t count = 0;
-    for (MoveType i = 0; i < 7; i++)
+    for (MoveType i = 0; i < COLUMNS; i++)
     {
       moves[count] = i;
-      count += (free[i] < 6);
+      count += (free[i] < ROWS);
     }
 
     return count == 0 ? INVALID_MOVE : moves[rand() % count];
@@ -97,9 +100,9 @@ struct Board
 
     ScoreType score = 0;
 
-    for (size_t i = 0; i < 7; i++)
+    for (size_t i = 0; i < COLUMNS; i++)
     {
-      for (size_t j = 0; j < 6; j++)
+      for (size_t j = 0; j < ROWS; j++)
       {
         for (size_t k = 0; k < 4; k++)
         {
@@ -114,7 +117,7 @@ struct Board
             x += dirs[k][0];
             y += dirs[k][1];
 
-            if (x >= 0 && x < 7 && y >= 0 && y < free[x])
+            if (x >= 0 && x < COLUMNS && y >= 0 && y < free[x])
             {
               zeroes += !data[x][y];
               ones += (data[x][y] != 0);
@@ -125,7 +128,7 @@ struct Board
             return { O_WIN, -512 };
           else if (ones == 4)
             return { X_WIN, 512 };
-          else if (x >= 0 && x < 7 && y >= 0 && y < 6)
+          else if (x >= 0 && x < COLUMNS && y >= 0 && y < ROWS)
           {
             if (zeroes == 0)
               score += values[ones];
@@ -141,15 +144,14 @@ struct Board
 
   void print() const
   {
-    for (size_t j = 0; j < 6; j++)
+    for (size_t j = 0; j < ROWS; j++)
     {
-      for (size_t i = 0; i < 7; i++)
+      for (size_t i = 0; i < COLUMNS; i++)
       {
-        size_t row = 5 - j;
-        char ch = data[i][row];
+        size_t row = ROWS - 1 - j;
 
-        std::cout << (row < free[i] ? (ch ? 'X' : 'O') : '-')
-                  << (i + 1 < 7 ? ' ' : '\n');
+        std::cout << (row < free[i] ? (data[i][row] ? 'X' : 'O') : '-')
+                  << (i + 1 < COLUMNS ? ' ' : '\n');
       }
     }
   }
@@ -177,7 +179,7 @@ MinimaxData minimax_aux(Board &board, size_t depth)
     INVALID_MOVE, board.player ? LOWEST_SCORE : GREATEST_SCORE
   };
 
-  for (MoveType i = 0; i < 7; i++)
+  for (MoveType i = 0; i < COLUMNS; i++)
   {
     if (!board.insert_at(i))
       continue;
@@ -209,7 +211,7 @@ MinimaxData alpha_beta_aux(
     INVALID_MOVE, board.player ? LOWEST_SCORE : GREATEST_SCORE
   };
 
-  for (MoveType i = 0; i < 7; i++)
+  for (MoveType i = 0; i < COLUMNS; i++)
   {
     if (!board.insert_at(i))
       continue;
@@ -341,12 +343,12 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
 
     Node *append_leaves(Node *leaf)
     {
-      static MoveType moves[7];
+      static MoveType moves[COLUMNS];
 
       size_t count = 0;
-      for (MoveType i = 0; i < 7; i++)
+      for (MoveType i = 0; i < COLUMNS; i++)
       {
-        if (leaf->board.free[i] < 6)
+        if (leaf->board.free[i] < ROWS)
           moves[count++] = i;
       }
 
@@ -417,7 +419,7 @@ int main()
   {
     auto move = monte_carlo_tree_search(board, board.player ? 50000 : 100000);
 
-    if (move >= 7)
+    if (move >= COLUMNS)
     {
       std::cout << "Invalid column number. It should be no greater than 6.\n";
       break;
