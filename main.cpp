@@ -642,7 +642,8 @@ int main(int argc, char **argv)
 
     if (move >= COLUMNS)
     {
-      std::cout << "Invalid column number. It should be no greater than 6.\n";
+      std::cerr << "error: invalid column number."
+        " It should be no greater than 6.\n";
       break;
     }
 
