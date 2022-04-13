@@ -142,10 +142,13 @@ struct Board
     return { is_over() ? DRAW : NOT_OVER, score };
   }
 
-  void print() const
+  void print(size_t offset = 0) const
   {
     for (size_t j = 0; j < ROWS; j++)
     {
+      for (size_t k = 0; k < offset; k++)
+        std::cout << ' ';
+
       for (size_t i = 0; i < COLUMNS; i++)
       {
         size_t row = ROWS - 1 - j;
