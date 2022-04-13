@@ -143,7 +143,7 @@ struct Board
     return { is_over() ? DRAW : NOT_OVER, score };
   }
 
-  void read_board(char const *board, bool player)
+  void read_board(char const *board)
   {
     assert(std::strlen(board) == COLUMNS * ROWS);
 
@@ -162,8 +162,6 @@ struct Board
         }
       }
     }
-
-    this->player = player;
   }
 
   void print(size_t offset = 0) const
@@ -453,7 +451,8 @@ int main(int argc, char **argv)
     { '\0', "o-max-iter", true },
     { '\0', "x-max-iter", true },
     { 'b', "board", true },
-    { 's', "show", false }
+    { 's', "show", false },
+    { 'p', "player", true }
   };
 
   char const *const algorithms[] = {
@@ -582,11 +581,25 @@ int main(int argc, char **argv)
       break;
     }
     case 6:
-      board.read_board(argv[i], 0);
+      board.read_board(argv[i]);
       break;
     case 7:
       should_show = true;
       break;
+    case 8:
+    {
+      char ch = argv[i][0];
+
+      if (argv[i][1] != '\0' || (ch != 'x' && ch != 'X' && ch != 'o' && ch != 'O'))
+      {
+        std::cerr << "error: invalid player.\n";
+
+        return EXIT_FAILURE;
+      }
+
+      board.player = (ch == 'x' || ch == 'X');
+      break;
+    }
     default:
       std::cerr << "error: invalid option\n";
       return EXIT_FAILURE;
