@@ -217,7 +217,7 @@ int main(int argc, char **argv)
               << x_depth
               << "\n    * Maximum iterations: "
               << x_max_iter
-              << "\n  - O's:\n    * O algorithm: "
+              << "\n  - O's:\n    * Algorithm: "
               << alg_to_string(o_alg)
               << "\n    * Depth: "
               << o_depth
