@@ -531,13 +531,15 @@ int main(int argc, char **argv)
 
     if (option == INVALID_OPTION)
     {
-      std::cerr << "error: unrecognized option.\n";
+      std::cerr << "error: unrecognized option: \"" << argv[i] << "\".\n";
 
       return EXIT_FAILURE;
     }
     else if (option_list[option].has_arg && ++i >= (size_t)argc)
     {
-      std::cerr << "error: excepted argument for the option.\n";
+      std::cerr << "error: expected argument for the option \""
+                << argv[i - 1]
+                << "\".\n";
 
       return EXIT_FAILURE;
     }
@@ -558,7 +560,9 @@ int main(int argc, char **argv)
       }
       else
       {
-        std::cerr << "error: unrecognized algorithm.\n";
+        std::cerr << "error: unrecognized algorithm \""
+                  << argv[i]
+                  << "\".\n";
 
         return EXIT_FAILURE;
       }
@@ -601,7 +605,9 @@ int main(int argc, char **argv)
 
       if (argv[i][1] != '\0' || (ch != 'x' && ch != 'X' && ch != 'o' && ch != 'O'))
       {
-        std::cerr << "error: invalid player.\n";
+        std::cerr << "error: invalid player: \""
+                  << argv[i]
+                  << "\".\n";
 
         return EXIT_FAILURE;
       }
@@ -610,7 +616,8 @@ int main(int argc, char **argv)
       break;
     }
     default:
-      std::cerr << "error: invalid option\n";
+      std::cerr << "error: unrecognized option slipped through checks,"
+        " this shouldn't happen.\n";
       return EXIT_FAILURE;
     }
   }
