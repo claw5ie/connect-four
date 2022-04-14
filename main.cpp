@@ -464,16 +464,23 @@ int main(int argc, char **argv)
   auto const find_option =
     [option_list](char const *arg) -> size_t
     {
-      if (arg[0] != '-')
-        return INVALID_MOVE;
+      if (
+        !(arg[0] == '-' &&
+          ((std::isalpha(arg[1]) && arg[2] == '\0') ||
+           (arg[1] == '-' && std::isalpha(arg[2]))))
+        )
+      {
+        return INVALID_OPTION;
+      }
 
       for (size_t i = 0; i < sizeof(option_list) / sizeof(*option_list); i++)
       {
+        auto &option = option_list[i];
+
         if (
-          (std::isalpha(arg[1]) &&
-           option_list[i].short_opt == arg[1] &&
-           arg[2] == '\0') ||
-          (arg[1] == '-' && !std::strcmp(arg + 2, option_list[i].long_opt))
+          arg[1] == option.short_opt ||
+          (option.long_opt != nullptr &&
+           !std::strcmp(arg + 2, option.long_opt))
           )
         {
           return i;
