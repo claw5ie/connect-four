@@ -149,6 +149,8 @@ struct Board
 
     for (size_t j = 0; j < COLUMNS; j++)
     {
+      top[j] = ROWS;
+
       for (size_t i = ROWS; i-- > 0; )
       {
         char ch = board[i * COLUMNS + j];
