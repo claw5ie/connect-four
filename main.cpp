@@ -659,7 +659,8 @@ int main(int argc, char **argv)
     {
       std::cerr << "error: invalid column number."
         " It should be no greater than 6.\n";
-      break;
+
+      return EXIT_FAILURE;
     }
 
     board.insert_at(move);
