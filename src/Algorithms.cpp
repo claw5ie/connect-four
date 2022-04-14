@@ -250,5 +250,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
       break;
   }
 
-  return tree.choose_best_child(&tree.root)->move;
+  auto node = tree.choose_best_child(&tree.root);
+
+  return node == nullptr ? INVALID_MOVE : node->move;
 }
