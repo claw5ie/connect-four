@@ -186,6 +186,25 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
       return true;
     }
 
+    void backpropagate(Node *leaf, bool won)
+    {
+      while (leaf->parent != leaf)
+      {
+        leaf->wins += won;
+        leaf->visits++;
+        leaf = leaf->parent;
+      }
+
+      leaf->wins += won;
+      leaf->visits++;
+    }
+
+    ~MonteCarloTree()
+    {
+      clean(root);
+    }
+
+  private:
     Node *append_leaves(Node *leaf)
     {
       static MoveType moves[COLUMNS];
@@ -215,25 +234,6 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
       return leaf->children;
     }
 
-    void backpropagate(Node *leaf, bool won)
-    {
-      while (leaf->parent != leaf)
-      {
-        leaf->wins += won;
-        leaf->visits++;
-        leaf = leaf->parent;
-      }
-
-      leaf->wins += won;
-      leaf->visits++;
-    }
-
-    ~MonteCarloTree()
-    {
-      clean(root);
-    }
-
-  private:
     void clean(Node const &node) const
     {
       for (size_t i = 0; i < node.count; i++)
