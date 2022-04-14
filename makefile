@@ -8,4 +8,4 @@ debug_build: ./main.cpp ./src/Board.cpp ./src/Algorithms.cpp
 	g++ $(WFLAGS) $(OFLAGS) -o $(OUTPUT) $^
 
 release_build: ./main.cpp ./src/Board.cpp ./src/Algorithms.cpp
-	g++ -O3 -o $(OUTPUT) $^
+	g++ -O3 -D NDEBUG -o $(OUTPUT) $^
