@@ -159,7 +159,8 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
 
     bool rollout(Node *leaf)
     {
-      assert(leaf->count == 0);
+      if (leaf->count > 0)
+        return false;
 
       if (leaf->visits > 0)
       {
