@@ -603,7 +603,7 @@ int main(int argc, char **argv)
     {
       char ch = argv[i][0];
 
-      if (argv[i][1] != '\0' || (ch != 'x' && ch != 'X' && ch != 'o' && ch != 'O'))
+      if ((ch != 'x' && ch != 'X' && ch != 'o' && ch != 'O') || argv[i][1] != '\0')
       {
         std::cerr << "error: invalid player: \""
                   << argv[i]
