@@ -206,6 +206,8 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
   private:
     Node *append_leaves(Node *leaf)
     {
+      assert(leaf->count == 0 && leaf->children == nullptr);
+
       static MoveType moves[COLUMNS];
 
       size_t count = 0;
