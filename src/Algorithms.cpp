@@ -144,7 +144,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
         if (child.visits == 0)
           return &child;
 
-        double const score = (double)child.wins / child.visits +
+        double const score = (double)child.wins / (2 * child.visits) +
           std::sqrt(2 * std::log(parent->visits) / child.visits);
 
         if (best_ucb < score)
@@ -178,14 +178,14 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
 
       backpropagate(
         leaf,
-        root.board.player ?
-          win == Board::X_WIN : win == Board::O_WIN
+        win == Board::DRAW ? 1 : 2 * (root.board.player ?
+          win == Board::X_WIN : win == Board::O_WIN)
         );
 
       return true;
     }
 
-    void backpropagate(Node *leaf, bool won)
+    void backpropagate(Node *leaf, uint32_t won)
     {
       while (leaf->parent != leaf)
       {
