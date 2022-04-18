@@ -23,7 +23,8 @@ int main(int argc, char **argv)
     { '\0', "x-max-iter", true },
     { 'b', "board", true },
     { 's', "show", false },
-    { 'p', "player", true }
+    { 'p', "player", true },
+    { '\0', "stats", false }
   };
 
   auto const find_option =
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
   size_t o_max_iter = 50000,
     x_max_iter = 200000;
   bool should_show = false;
+  bool should_show_stats = false;
 
   for (size_t i = 1; i < (size_t)argc; i++)
   {
@@ -184,6 +186,9 @@ int main(int argc, char **argv)
       board.player = (ch == 'x' || ch == 'X');
       break;
     }
+    case 9:
+      should_show_stats = true;
+      break;
     default:
       std::cerr << "error: unrecognized option slipped through checks,"
         " this shouldn't happen.\n";
@@ -192,21 +197,30 @@ int main(int argc, char **argv)
   }
 
   auto const choose_algorithm =
-    [&board](Algorithm alg, size_t depth, size_t iter) -> MoveType
+    [&board](Algorithm alg, size_t depth, size_t iter) -> SearchResult
     {
+      auto const start = std::chrono::steady_clock::now();
+
+      SearchResult stats = { INVALID_MOVE, 0, Duration() };
+
       switch (alg)
       {
       case MINIMAX:
-        return minimax(board, depth);
+        stats = minimax(board, depth);
+        break;
       case ALPHA_BETA:
-        return alpha_beta(board, depth);
+        stats = alpha_beta(board, depth);
+        break;
       case MONTE_CARLO:
-        return monte_carlo_tree_search(board, iter);
+        stats = monte_carlo_tree_search(board, iter);
+        break;
       default:
-        return INVALID_MOVE;
+        break;
       }
 
-      return INVALID_MOVE;
+      stats.time_spent = std::chrono::steady_clock::now() - start;
+
+      return stats;
     };
 
   if (should_show)
@@ -234,11 +248,11 @@ int main(int argc, char **argv)
 
   do
   {
-    MoveType move = board.player ?
+    SearchResult stats = board.player ?
       choose_algorithm(x_alg, x_depth, x_max_iter) :
       choose_algorithm(o_alg, o_depth, o_max_iter);
 
-    if (move >= COLUMNS)
+    if (stats.move >= COLUMNS)
     {
       std::cerr << "error: invalid column number."
         " It should be no greater than 6.\n";
@@ -246,7 +260,16 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
 
-    board.insert_at(move);
+    if (should_show_stats)
+    {
+      std::cout << (board.player ? 'X' : 'O')
+                << " expanded " << stats.expanded
+                << " nodes and spent "
+                << stats.time_spent.count()
+                << " seconds.\n";
+    }
+
+    board.insert_at(stats.move);
     auto status = board.score().state;
 
     if (status != Board::NOT_OVER)

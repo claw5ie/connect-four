@@ -1,12 +1,23 @@
 #ifndef ALGORITHMS_HPP
 #define ALGORITHMS_HPP
 
+#include <chrono>
+
 #include "Board.hpp"
 
-MoveType minimax(Board board, size_t max_depth);
+using Duration = std::chrono::duration<double>;
 
-MoveType alpha_beta(Board board, size_t max_depth);
+struct SearchResult
+{
+  MoveType move;
+  size_t expanded;
+  Duration time_spent;
+};
 
-MoveType monte_carlo_tree_search(Board const &board, size_t max_iters);
+SearchResult minimax(Board board, size_t max_depth);
+
+SearchResult alpha_beta(Board board, size_t max_depth);
+
+SearchResult monte_carlo_tree_search(Board const &board, size_t max_iters);
 
 #endif // ALGORITHMS_HPP

@@ -14,7 +14,7 @@ struct MinimaxData
   ScoreType score;
 };
 
-MinimaxData minimax_aux(Board &board, size_t depth)
+MinimaxData minimax_aux(Board &board, size_t depth, size_t &expanded)
 {
   if (depth == 0 || board.is_over())
     return { INVALID_MOVE, board.score().score };
@@ -28,7 +28,8 @@ MinimaxData minimax_aux(Board &board, size_t depth)
     if (!board.insert_at(i))
       continue;
 
-    auto score = minimax_aux(board, depth - 1).score;
+    expanded++;
+    auto score = minimax_aux(board, depth - 1, expanded).score;
 
     if (
       (board.player && result.score > score) ||
@@ -45,7 +46,7 @@ MinimaxData minimax_aux(Board &board, size_t depth)
 }
 
 MinimaxData alpha_beta_aux(
-  Board &board, ScoreType alpha, ScoreType beta, size_t depth
+  Board &board, ScoreType alpha, ScoreType beta, size_t depth, size_t &expanded
   )
 {
   if (depth == 0 || board.is_over())
@@ -60,7 +61,8 @@ MinimaxData alpha_beta_aux(
     if (!board.insert_at(i))
       continue;
 
-    auto score = alpha_beta_aux(board, alpha, beta, depth - 1).score;
+    expanded++;
+    auto score = alpha_beta_aux(board, alpha, beta, depth - 1, expanded).score;
 
     if (board.player)
     {
@@ -86,19 +88,23 @@ MinimaxData alpha_beta_aux(
   return result;
 }
 
-MoveType minimax(Board board, size_t max_depth)
+SearchResult minimax(Board board, size_t max_depth)
 {
-  return minimax_aux(board, max_depth).move;
+  size_t expanded = 0;
+
+  return { minimax_aux(board, max_depth, expanded).move, expanded, Duration() };
 }
 
-MoveType alpha_beta(Board board, size_t max_depth)
+SearchResult alpha_beta(Board board, size_t max_depth)
 {
-  return alpha_beta_aux(
-    board, LOWEST_SCORE, GREATEST_SCORE, max_depth
-    ).move;
+  size_t expanded = 0;
+
+  return { alpha_beta_aux(
+      board, LOWEST_SCORE, GREATEST_SCORE, max_depth, expanded
+      ).move, expanded, Duration() };
 }
 
-MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
+SearchResult monte_carlo_tree_search(Board const &board, size_t max_iters)
 {
   struct MonteCarloTree
   {
@@ -114,6 +120,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
     };
 
     Node root;
+    size_t expanded;
 
     MonteCarloTree(Board const &board)
       : root({ board, &root, nullptr, INVALID_MOVE, 0, 0, 0 })
@@ -230,6 +237,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
         node.board.insert_at(moves[i]);
         node.parent = leaf;
         node.move = moves[i];
+        expanded++;
       }
 
       return leaf->children;
@@ -254,5 +262,7 @@ MoveType monte_carlo_tree_search(Board const &board, size_t max_iters)
 
   auto node = tree.choose_best_child(&tree.root);
 
-  return node == nullptr ? INVALID_MOVE : node->move;
+  return node == nullptr ?
+    SearchResult{ INVALID_MOVE, 0, Duration() } :
+    SearchResult{ node->move, tree.expanded, Duration() };
 }
