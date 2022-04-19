@@ -109,6 +109,8 @@ Board::Status Board::score() const
     }
   }
 
+  score += player ? 16 : -16;
+
   return { is_over() ? DRAW : NOT_OVER, score };
 }
 
