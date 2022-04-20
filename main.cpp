@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     { 'b', "board", true },
     { 's', "show", false },
     { 'p', "player", true },
-    { '\0', "stats", false }
+    { '\0', "no-stats", false }
   };
 
   auto const find_option =
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   size_t o_max_iter = 50000,
     x_max_iter = 200000;
   bool should_show = false;
-  bool should_show_stats = false;
+  bool should_show_stats = true;
 
   for (size_t i = 1; i < (size_t)argc; i++)
   {
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
       break;
     }
     case 9:
-      should_show_stats = true;
+      should_show_stats = false;
       break;
     default:
       std::cerr << "error: unrecognized option slipped through checks,"
