@@ -8,14 +8,6 @@
 
 #define INVALID_OPTION (std::numeric_limits<size_t>::max())
 
-char const *find_next_elem(char const *str)
-{
-  while (*str != ',' && *str != '\0')
-    str++;
-
-  return str;
-}
-
 int main(int argc, char **argv)
 {
   struct
@@ -66,19 +58,20 @@ int main(int argc, char **argv)
       MINIMAX,
       ALPHA_BETA,
       MONTE_CARLO,
+      HUMAN,
       ALGORITHM_COUNT
     };
 
   char const *const algorithms[] = {
-    "minimax", "alpha-beta", "monte-carlo"
+    "minimax", "alpha-beta", "monte-carlo", "human"
   };
 
   auto const what_algorithm =
-    [algorithms](char const *arg, size_t count) -> Algorithm
+    [algorithms](char const *arg) -> Algorithm
     {
       for (size_t i = 0; i < ALGORITHM_COUNT; i++)
       {
-        if (!std::strncmp(arg, algorithms[i], count))
+        if (!std::strcmp(arg, algorithms[i]))
           return (Algorithm)i;
       }
 
@@ -92,86 +85,60 @@ int main(int argc, char **argv)
   struct
   {
     Algorithm algorithm;
-
-    union
-    {
-      struct
-      {
-        size_t depth;
-      } minimax;
-
-      struct
-      {
-        size_t depth;
-      } alpha_beta;
-
-      struct
-      {
-        size_t max_iter;
-      } monte_carlo;
-    } as;
-
-    void set(size_t val)
-    {
-      switch (algorithm)
-      {
-      case MINIMAX:
-        as.minimax.depth = val;
-        break;
-      case ALPHA_BETA:
-        as.alpha_beta.depth = val;
-        break;
-      case MONTE_CARLO:
-        as.monte_carlo.max_iter = val;
-        break;
-      default:
-        assert(false);
-      }
-    }
+    size_t depth_or_iter;
 
     void set_default()
     {
       switch (algorithm)
       {
       case MINIMAX:
-        as.minimax.depth = 8;
+        depth_or_iter = 8;
         break;
       case ALPHA_BETA:
-        as.alpha_beta.depth = 10;
+        depth_or_iter = 10;
         break;
       case MONTE_CARLO:
-        as.monte_carlo.max_iter = 25000;
+        depth_or_iter = 25000;
         break;
       default:
-        assert(false);
+        depth_or_iter = 0;
       }
     }
 
     void print() const
     {
-      std::cout << "- algorithm: ";
+      std::cout << "  * algorithm: ";
 
       switch (algorithm)
       {
       case MINIMAX:
-        std::cout << "minimax\n- maximum depth: " << as.minimax.depth << '\n';
+        std::cout << "minimax\n  * maximum depth: "
+                  << depth_or_iter
+                  << '\n';
         break;
       case ALPHA_BETA:
-        std::cout << "alpha-beta\n- maximum depth: " << as.alpha_beta.depth << '\n';
+        std::cout << "alpha-beta\n  * maximum depth: "
+                  << depth_or_iter
+                  << '\n';
         break;
       case MONTE_CARLO:
-        std::cout << "monte carlo\n- maximum iterations: " << as.monte_carlo.max_iter << '\n';
+        std::cout << "monte carlo\n  * maximum iterations: "
+                  << depth_or_iter
+                  << '\n';
+        break;
+      case HUMAN:
+        std::cout << "human\n";
         break;
       default:
-        assert(false);
+        break;
       }
     }
-  } data[2];
+  } player_info[2];
 
-  data[0].algorithm = MINIMAX;
-  data[0].set_default();
-  data[1].algorithm = ALPHA_BETA;
-  data[1].set_default();
+  player_info[0].algorithm = MINIMAX;
+  player_info[0].set_default();
+  player_info[1].algorithm = ALPHA_BETA;
+  player_info[1].set_default();
 
   for (size_t i = 1; i < (size_t)argc; i++)
   {
@@ -183,7 +150,7 @@ int main(int argc, char **argv)
 
       return EXIT_FAILURE;
     }
-    else if (option_list[option].has_arg && ++i >= (size_t)argc)
+    else if ((i += option_list[option].has_arg) >= (size_t)argc)
     {
       std::cerr << "error: expected argument for the option \""
                 << argv[i - 1]
@@ -197,17 +164,12 @@ int main(int argc, char **argv)
     case 0:
     case 1:
     {
-      auto next_arg = find_next_elem(argv[i]);
-      auto alg = what_algorithm(argv[i], next_arg - argv[i]);
+      auto alg = what_algorithm(argv[i]);
 
       if (alg < ALGORITHM_COUNT)
       {
-        data[option].algorithm = alg;
-
-        if (*next_arg == '\0')
-          data[option].set_default();
-        else
-          data[option].set(strtoul(next_arg + 1, nullptr, 10));
+        player_info[option].algorithm = alg;
+        player_info[option].set_default();
       }
       else
       {
@@ -253,24 +215,28 @@ int main(int argc, char **argv)
   }
 
   auto const choose_algorithm =
-    [&board, &data]() -> SearchResult
+    [&board, &player_info]() -> SearchResult
     {
       auto const start = std::chrono::steady_clock::now();
 
       SearchResult stats = { INVALID_MOVE, 0, Duration() };
 
-      auto &player = data[(bool)board.player];
+      auto &player = player_info[(bool)board.player];
 
       switch (player.algorithm)
       {
       case MINIMAX:
-        stats = minimax(board, player.as.minimax.depth);
+        stats = minimax(board, player.depth_or_iter);
         break;
       case ALPHA_BETA:
-        stats = alpha_beta(board, player.as.alpha_beta.depth);
+        stats = alpha_beta(board, player.depth_or_iter);
         break;
       case MONTE_CARLO:
-        stats = monte_carlo_tree_search(board, player.as.monte_carlo.max_iter);
+        stats = monte_carlo_tree_search(board, player.depth_or_iter);
+        break;
+      case HUMAN:
+        std::cout << "Your move [0-6]? ";
+        std::cin >> stats.move;
         break;
       default:
         break;
@@ -283,42 +249,47 @@ int main(int argc, char **argv)
 
   if (should_show)
   {
-    std::cout << "player O:\n";
-    data[0].print();
-    std::cout << "player X:\n";
-    data[1].print();
-    std::cout << "board:\n";
-    board.print();
-
+    std::cout << "- player O:\n";
+    player_info[0].print();
+    std::cout << "- player X:\n";
+    player_info[1].print();
+    std::cout << "- board:\n";
+    board.print(2);
     std::cout << "- current player: "
               << (board.player ? 'X' : 'O')
               << "\n\n";
   }
 
+  bool human_is_playing = player_info[0].algorithm == HUMAN ||
+    player_info[1].algorithm == HUMAN;
+
   do
   {
     SearchResult stats = board.player ?
-      choose_algorithm() :
-      choose_algorithm();
+      choose_algorithm() : choose_algorithm();
 
     if (stats.move >= COLUMNS)
     {
       std::cerr << "error: invalid column number."
         " It should be no greater than 6.\n";
 
-      return EXIT_FAILURE;
+      if (human_is_playing)
+        continue;
+      else
+        return EXIT_FAILURE;
     }
+
+    board.insert_at(stats.move);
+    board.print();
 
     if (should_show_stats)
     {
-      std::cout << (board.player ? 'X' : 'O')
-                << " expanded " << stats.expanded
+      std::cout << "expanded " << stats.expanded
                 << " nodes and spent "
                 << stats.time_spent.count()
                 << " seconds.\n";
     }
 
-    board.insert_at(stats.move);
     auto status = board.score().state;
 
     if (status != Board::NOT_OVER)
