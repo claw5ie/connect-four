@@ -123,7 +123,7 @@ SearchResult monte_carlo_tree_search(Board const &board, size_t max_iters)
     size_t expanded;
 
     MonteCarloTree(Board const &board)
-      : root({ board, &root, nullptr, INVALID_MOVE, 0, 0, 0 })
+      : root({ board, &root, nullptr, INVALID_MOVE, 0, 0, 0 }), expanded(0)
     {
     }
 
