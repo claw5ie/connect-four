@@ -50,8 +50,8 @@ MoveType Board::choose_random_move() const
   size_t count = 0;
   for (MoveType i = 0; i < COLUMNS; i++)
   {
-    moves[count] = i;
-    count += (top[i] < ROWS);
+    if (top[i] < ROWS)
+      moves[count++] = i;
   }
 
   return count == 0 ? INVALID_MOVE : moves[rand() % count];

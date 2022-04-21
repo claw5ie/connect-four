@@ -91,17 +91,19 @@ MinimaxData alpha_beta_aux(
 SearchResult minimax(Board board, size_t max_depth)
 {
   size_t expanded = 0;
+  auto move = minimax_aux(board, max_depth, expanded).move;
 
-  return { minimax_aux(board, max_depth, expanded).move, expanded, Duration() };
+  return { move, expanded, Duration() };
 }
 
 SearchResult alpha_beta(Board board, size_t max_depth)
 {
   size_t expanded = 0;
-
-  return { alpha_beta_aux(
+  auto move = alpha_beta_aux(
       board, LOWEST_SCORE, GREATEST_SCORE, max_depth, expanded
-      ).move, expanded, Duration() };
+    ).move;
+
+  return { move, expanded, Duration() };
 }
 
 SearchResult monte_carlo_tree_search(Board const &board, size_t max_iters)
