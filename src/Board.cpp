@@ -116,7 +116,11 @@ Board::Status Board::score() const
 
 void Board::read_board(char const *board)
 {
-  assert(std::strlen(board) == COLUMNS * ROWS);
+  if (std::strlen(board) != COLUMNS * ROWS)
+  {
+    std::cerr << "error: incorrect dimension of the board.\n";
+    exit(EXIT_FAILURE);
+  }
 
   for (size_t j = 0; j < COLUMNS; j++)
   {
