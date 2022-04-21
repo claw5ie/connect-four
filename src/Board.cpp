@@ -109,9 +109,10 @@ Board::Status Board::score() const
     }
   }
 
-  score += player ? 16 : -16;
-
-  return { is_over() ? DRAW : NOT_OVER, score };
+  if (is_over())
+    return { DRAW, 0 };
+  else
+    return { NOT_OVER, score + (player ? 16 : -16) };
 }
 
 void Board::read_board(char const *board)
