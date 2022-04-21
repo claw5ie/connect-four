@@ -6,6 +6,9 @@
 #include "src/Board.hpp"
 #include "src/Algorithms.hpp"
 
+#define MINIMAX_DEPTH 8
+#define ALPHA_BETA_DEPTH 10
+#define MONTE_CARLO_ITER 25000
 #define INVALID_OPTION (std::numeric_limits<size_t>::max())
 
 int main(int argc, char **argv)
@@ -21,7 +24,8 @@ int main(int argc, char **argv)
     { 'b', "board", true },
     { 'c', "config", false },
     { 'p', "player", true },
-    { 's', "no-stats", false }
+    { 's', "no-stats", false },
+    { '\0', "no-print-board", false }
   };
 
   auto const find_option =
@@ -81,29 +85,11 @@ int main(int argc, char **argv)
   Board board = { };
   bool should_show = false;
   bool should_show_stats = true;
+  bool should_print_board = true;
 
   struct
   {
     Algorithm algorithm;
-    size_t depth_or_iter;
-
-    void set_default()
-    {
-      switch (algorithm)
-      {
-      case MINIMAX:
-        depth_or_iter = 8;
-        break;
-      case ALPHA_BETA:
-        depth_or_iter = 10;
-        break;
-      case MONTE_CARLO:
-        depth_or_iter = 25000;
-        break;
-      default:
-        depth_or_iter = 0;
-      }
-    }
 
     void print() const
     {
@@ -113,17 +99,17 @@ int main(int argc, char **argv)
       {
       case MINIMAX:
         std::cout << "minimax\n  * maximum depth: "
-                  << depth_or_iter
+                  << MINIMAX_DEPTH
                   << '\n';
         break;
       case ALPHA_BETA:
         std::cout << "alpha-beta\n  * maximum depth: "
-                  << depth_or_iter
+                  << ALPHA_BETA_DEPTH
                   << '\n';
         break;
       case MONTE_CARLO:
         std::cout << "monte carlo\n  * maximum iterations: "
-                  << depth_or_iter
+                  << MONTE_CARLO_ITER
                   << '\n';
         break;
       case HUMAN:
@@ -136,9 +122,7 @@ int main(int argc, char **argv)
   } player_info[2];
 
   player_info[0].algorithm = MINIMAX;
-  player_info[0].set_default();
   player_info[1].algorithm = ALPHA_BETA;
-  player_info[1].set_default();
 
   for (size_t i = 1; i < (size_t)argc; i++)
   {
@@ -169,7 +153,6 @@ int main(int argc, char **argv)
       if (alg < ALGORITHM_COUNT)
       {
         player_info[option].algorithm = alg;
-        player_info[option].set_default();
       }
       else
       {
@@ -207,6 +190,9 @@ int main(int argc, char **argv)
     case 5:
       should_show_stats = false;
       break;
+    case 6:
+      should_print_board = false;
+      break;
     default:
       std::cerr << "error: unrecognized option slipped through checks,"
         " this shouldn't happen.\n";
@@ -226,13 +212,13 @@ int main(int argc, char **argv)
       switch (player.algorithm)
       {
       case MINIMAX:
-        stats = minimax(board, player.depth_or_iter);
+        stats = minimax(board, MINIMAX_DEPTH);
         break;
       case ALPHA_BETA:
-        stats = alpha_beta(board, player.depth_or_iter);
+        stats = alpha_beta(board, ALPHA_BETA_DEPTH);
         break;
       case MONTE_CARLO:
-        stats = monte_carlo_tree_search(board, player.depth_or_iter);
+        stats = monte_carlo_tree_search(board, MONTE_CARLO_ITER);
         break;
       case HUMAN:
         std::cout << "Your move [0-6]? ";
@@ -260,8 +246,11 @@ int main(int argc, char **argv)
               << "\n\n";
   }
 
-  bool human_is_playing = player_info[0].algorithm == HUMAN ||
+  bool const human_is_playing = player_info[0].algorithm == HUMAN ||
     player_info[1].algorithm == HUMAN;
+
+  if (should_print_board)
+    board.print();
 
   do
   {
@@ -280,7 +269,9 @@ int main(int argc, char **argv)
     }
 
     board.insert_at(stats.move);
-    board.print();
+
+    if (should_print_board)
+      board.print();
 
     if (should_show_stats)
     {
