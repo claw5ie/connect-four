@@ -246,9 +246,6 @@ int main(int argc, char **argv)
               << "\n\n";
   }
 
-  bool const human_is_playing = player_info[0].algorithm == HUMAN ||
-    player_info[1].algorithm == HUMAN;
-
   if (should_print_board)
     board.print();
 
@@ -261,7 +258,7 @@ int main(int argc, char **argv)
       std::cerr << "error: invalid column number."
         " It should be no greater than 6.\n";
 
-      if (human_is_playing)
+      if (player_info[(bool)board.player].algorithm == HUMAN)
         continue;
       else
         return EXIT_FAILURE;
