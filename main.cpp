@@ -254,8 +254,7 @@ int main(int argc, char **argv)
 
   do
   {
-    SearchResult stats = board.player ?
-      choose_algorithm() : choose_algorithm();
+    SearchResult stats = choose_algorithm();
 
     if (stats.move >= COLUMNS)
     {
